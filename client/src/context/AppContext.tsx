@@ -6,6 +6,7 @@ import React, {
 } from "react";
 import { dummyCourses } from "../assets/assets";
 import humanizeDuration from "humanize-duration";
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 type Course = (typeof dummyCourses)[0];
 type Chapter = Course["courseContent"][0];
@@ -33,8 +34,11 @@ type AppContextProviderProps = {
 export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const currency = import.meta.env.VITE_CURRENCY;
 
+  const {getToken} = useAuth();
+  const {user} = useUser()
+
   const [allCourses, setAllCourses] = useState<Course[]>([]);
-  const [isEducator, setIsEducator] = useState(true);
+  const [isEducator, setIsEducator] = useState(false);
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
 
   // Fetch All Courses
@@ -89,6 +93,16 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     fetchAllCourses();
     fetchUserEnrolledCourses()
   }, []);
+
+  const logToken = async () => {
+    console.log(await getToken())
+  }
+
+  useEffect(()=>{
+    if (user) {
+      logToken()
+    }
+  },[user])
 
   const value: AppContextValue = {
     currency,
