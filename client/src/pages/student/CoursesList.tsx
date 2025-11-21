@@ -3,9 +3,8 @@ import SearchBar from "../../components/student/SearchBar";
 import { useContext } from "react";
 import { AppContext } from "../../context/AppContext";
 import CourseCard from "../../components/student/CourseCard";
-import { assets, type dummyCourses } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import Footer from "../../components/student/Footer";
-type Course = (typeof dummyCourses)[0];
 
 const CoursesList = () => {
   const navigate = useNavigate();
@@ -45,7 +44,7 @@ const CoursesList = () => {
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 my-16 gap-3 px-2 md:p-0">
           {allCourses
-            .filter((course: Course) =>
+            .filter((course) =>
               input
                 ? course.courseTitle.toLowerCase().includes(input.toLowerCase())
                 : true
