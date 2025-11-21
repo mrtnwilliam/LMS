@@ -1,21 +1,21 @@
 import uniqid from "uniqid";
 import Quill from "quill";
-import { useEffect, useRef, useState } from "react";
-import { assets, dummyCourses } from "../../assets/assets";
-type ChapterContent = (typeof dummyCourses)[0]["courseContent"][0]['chapterContent'];
-
-interface Chapter {
-  chapterId: string;
-  chapterTitle: string;
-  chapterContent: ChapterContent;
-  collapsed: boolean;
-  chapterOrder: number;
-}
+import { useContext, useEffect, useRef, useState } from "react";
+import { assets } from "../../assets/assets";
+import { AppContext } from "../../context/AppContext";
+import { toast } from "react-toastify";
+import axios from "axios";
+import type { Chapter } from "../../types";
 
 type ChapterAction = "add" | "remove" | "toggle";
 type LectureAction = "add" | "remove";
 
 const AddCourse = () => {
+  const context = useContext(AppContext);
+  if (!context)
+    throw new Error("AppContext must be used within AppContextProvider");
+  
+  const { backendUrl, getToken } = context;
   const quillRef = useRef<Quill | null>(null);
   const editorRef = useRef<HTMLDivElement | null>(null);
 
@@ -108,7 +108,42 @@ const AddCourse = () => {
 
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault()
+    try {
+      e.preventDefault();
+      if (!image) {
+        toast.error('Thumbnail Not Selected');
+        return;
+      }
+;
+      const courseData = {
+        courseTitle,
+        courseDescription: quillRef.current?.root?.innerHTML ?? "",
+        coursePrice: Number(coursePrice),
+        discount: Number(discount),
+        courseContent: chapters,
+      };
+
+      const formData = new FormData()
+      formData.append('courseData', JSON.stringify(courseData))
+      formData.append('image',image)
+      const token = await getToken()
+      const {data} = await axios.post(backendUrl + '/api/educator/add-course', formData, {headers:{Authorization: `Bearer ${token}`}})
+
+      if (data.success) {
+        toast.success(data.message)
+        setCourseTitle('')
+        setCoursePrice(0)
+        setDiscount(0)
+        setImage(null)
+        setChapters([])
+        quillRef.current!.root.innerHTML = ""
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+    
   }
 
   useEffect(() => {

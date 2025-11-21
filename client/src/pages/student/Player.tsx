@@ -1,50 +1,132 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { useParams } from "react-router-dom";
-import { assets, type dummyCourses } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import humanizeDuration from "humanize-duration";
 import YouTube from "react-youtube";
 import Footer from "../../components/student/Footer";
 import Rating from "../../components/student/Rating";
-type Course = (typeof dummyCourses)[0];
+import type { Course, CourseProgress, UserData } from "../../types";
+import { toast } from "react-toastify";
+import axios from "axios";
+import Loading from "../../components/student/Loading";
+import type { Lecture } from "../../types";
+
+interface PlayerData extends Lecture {
+  videoId?: string;
+  chapter?: number;
+}
 
 const Player = () => {
   const context = useContext(AppContext);
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { enrolledCourses, calculateChapterTime } = context;
+  const {
+    enrolledCourses,
+    calculateChapterTime,
+    backendUrl,
+    getToken,
+    userData,
+    fetchUserEnrolledCourses,
+  } = context;
   const { courseId } = useParams();
   const [courseData, setCourseData] = useState<Course | null>(null);
   const [openSections, setOpenSections] = useState<{ [key: number]: boolean }>(
     {}
   );
-  const [playerData, setPlayerData] = useState<{
-    lectureTitle: string;
-    lectureUrl: string;
-    videoId?: string;
-    chapter?: number;
-    lecture?: number;
-  } | null>(null);
+  const [playerData, setPlayerData] = useState<PlayerData | null>(null);
+  const [progressData, setProgressData] = useState<CourseProgress | null>(null);
+  const [initialRating, setInitialRating] = useState(0);
 
   const getCourseData = () => {
     enrolledCourses.map((course) => {
       if (course._id === courseId) {
         setCourseData(course);
+        if (!userData) return;
+        course.courseRatings.map((item) => {
+          if (item.userId === (userData as UserData)._id) {
+            setInitialRating(item.rating);
+          }
+        });
       }
     });
   };
-
-  useEffect(() => {
-    getCourseData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enrolledCourses]);
 
   const toggleSection = (index: number) => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
-  return (
+  useEffect(() => {
+    if (enrolledCourses.length > 0) {
+      getCourseData();
+    }
+  }, [enrolledCourses]);
+
+  const markLectureAsCompleted = async (lectureId: string) => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.post(
+        backendUrl + "/api/user/update-course-progress",
+        { courseId, lectureId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        getCourseProgress();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  const getCourseProgress = async () => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.post(
+        backendUrl + "/api/user/get-course-progress",
+        { courseId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        setProgressData(data.progressData)
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  const handleRate = async (rating: number) => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.post(
+        backendUrl + "/api/user/add-rating",
+        { courseId, rating },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        fetchUserEnrolledCourses();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+
+  useEffect(() => {
+    getCourseProgress();
+  }, []);
+
+  return courseData ? (
     <>
       <div className="p-4 sm:p-10 flex flex-col-reverse md:grid md:grid-cols-2 gap-10 md:px-36">
         {/* left column */}
@@ -90,8 +172,12 @@ const Player = () => {
                         <li key={i} className="flex items-center gap-2 py-1">
                           <img
                             src={
-                              // eslint-disable-next-line no-constant-condition
-                              false ? assets.blue_tick_icon : assets.play_icon
+                              progressData &&
+                              progressData.lectureCompleted.includes(
+                                lecture.lectureId
+                              )
+                                ? assets.blue_tick_icon
+                                : assets.play_icon
                             }
                             alt="play icon"
                             className="w-4 h-4 mt-1"
@@ -105,7 +191,7 @@ const Player = () => {
                                     setPlayerData({
                                       ...lecture,
                                       chapter: index + 1,
-                                      lecture: i + 1,
+                                      lectureOrder: i + 1,
                                     })
                                   }
                                   className="text-blue-500 cursor-pointer"
@@ -130,7 +216,7 @@ const Player = () => {
           </div>
           <div className="flex items-center gap-2 py-3 mt-10">
             <h1 className="text-xl font-bold">Rate this Course:</h1>
-            <Rating initialRating={0} />
+            <Rating initialRating={initialRating} onRate={handleRate} />
           </div>
         </div>
         {/* right column */}
@@ -143,10 +229,18 @@ const Player = () => {
               />
               <div className="flex justify-between items-center mt-1">
                 <p>
-                  {playerData.chapter} {playerData.lecture}{" "}
+                  {playerData.chapter} {playerData.lectureOrder}{" "}
                   {playerData.lectureTitle}
                 </p>
-                <button className="text-blue-600">{false ? 'Completed' : "Mark Complete"}</button>
+                <button
+                  onClick={() => markLectureAsCompleted(playerData.lectureId)}
+                  className="cursor-pointer text-blue-600"
+                >
+                  {progressData &&
+                  progressData.lectureCompleted.includes(playerData.lectureId)
+                    ? "Completed"
+                    : "Mark Complete"}
+                </button>
               </div>
             </div>
           ) : (
@@ -156,6 +250,8 @@ const Player = () => {
       </div>
       <Footer />
     </>
+  ) : (
+    <Loading />
   );
 };
 

@@ -1,24 +1,41 @@
 import { useContext, useEffect, useState } from "react"
 import { AppContext } from "../../context/AppContext"
-import { assets, dummyDashboardData } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import Loading from "../../components/student/Loading";
 import DashboardCard from "../../components/educator/DashboardCard";
+import axios from "axios";
+import { toast } from "react-toastify";
+import type { DashboardData } from "../../types";
 
 const Dashboard = () => {
   const context = useContext(AppContext);
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { currency } = context;
-  const [dashboardData, setDashboardData] = useState<typeof dummyDashboardData | null>(null)
+  const { currency, backendUrl, isEducator, getToken } = context;
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
 
   const fetchDashboardData = async () => {
-    setDashboardData(dummyDashboardData)
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(backendUrl + '/api/educator/dashboard', {headers: {Authorization: `Bearer ${token}`}})
+
+      if (data.success) {
+        setDashboardData(data.dashboardData);
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
   }
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    if (isEducator) {
+
+      fetchDashboardData()
+    }
+  }, [isEducator])
 
   return dashboardData ? (
     <div className="min-h-screen flex flex-col items-start justify-between gap-8 md:p-8 md:pb-0 p-4 pt-8 pb-0">

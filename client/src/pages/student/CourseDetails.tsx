@@ -1,12 +1,14 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AppContext } from "../../context/AppContext";
-import { assets, type dummyCourses } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import humanizeDuration from "humanize-duration";
 import Footer from "../../components/student/Footer";
 import YouTube from "react-youtube";
 import Loading from "../../components/student/Loading";
-type Course = (typeof dummyCourses)[0];
+import axios from "axios";
+import { toast } from "react-toastify";
+import type { Course } from "../../types";
 const CourseDetails = () => {
   const { id } = useParams();
 
@@ -20,25 +22,66 @@ const CourseDetails = () => {
     throw new Error("AppContext must be used within AppContextProvider");
 
   const {
-    allCourses,
     calculateRating,
     calculateNoOfLectures,
     calculateCourseDuration,
     calculateChapterTime,
     currency,
+    backendUrl,
+    userData,
+    getToken
   } = context;
 
   const rating =
     courseData && calculateRating ? calculateRating(courseData) : 0;
   const fetchCourseData = async () => {
-    const findCourse = allCourses.find((course) => course._id === id) as Course;
-    setCourseData(findCourse);
+    try {
+      const { data } = await axios.get(backendUrl + '/api/course/' + id);
+
+      if (data.success) {
+        setCourseData(data.courseData)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
   };
+
+  const enrollCourse = async () => {
+    try {
+      if (!userData) {
+        return toast.warn('Login to Enroll')
+      }
+
+      if (isAlreadyEnrolled) {
+        return toast.warn('Already Enrolled!')
+      }
+      const token = await getToken();
+      const {data} = await axios.post(backendUrl + '/api/user/purchase' , {courseId:courseData?._id}, {headers: {Authorization: `Bearer ${token}`}})
+
+      if (data.success) {
+        const {session_url} = data;
+        window.location.replace(session_url)
+      } else {
+        toast.error(data.message)
+      }
+
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
+  }
 
   useEffect(() => {
     fetchCourseData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allCourses]);
+  }, []);
+
+  useEffect(() => {
+    if (userData && courseData) {
+      setIsAlreadyEnrolled(userData.enrolledCourses.includes(courseData._id))
+    }
+  }, [userData, courseData]);
 
   const toggleSection = (index: number) => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -92,7 +135,7 @@ const CourseDetails = () => {
 
           <p className="text-sm">
             Course by{" "}
-            <span className="text-blue-600 underline">GreatStack</span>
+            <span className="text-blue-600 underline">{typeof courseData.educator === "string" ? "Unknown Educator" : courseData.educator.name}</span>
           </p>
 
           <div className="pt-8 text-gray-800">
@@ -243,7 +286,7 @@ const CourseDetails = () => {
                 </p>
               </div>
             </div>
-            <button className="md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium">
+            <button onClick={enrollCourse} className="cursor-pointer md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium">
               {isAlreadyEnrolled ? "Already Enrolled" : "Enroll Now"}
             </button>
 

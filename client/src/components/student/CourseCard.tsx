@@ -1,9 +1,8 @@
 import { useContext } from "react";
-import { assets, dummyCourses } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import { AppContext } from "../../context/AppContext";
 import { Link } from "react-router-dom";
-
-type Course = (typeof dummyCourses)[0];
+import type { Course } from "../../types";
 
 const CourseCard = ({ course }: { course: Course }) => {
   const appContext = useContext(AppContext);
@@ -19,7 +18,7 @@ const CourseCard = ({ course }: { course: Course }) => {
       <img className="w-full" src={course.courseThumbnail} alt="" />
       <div className="p-3 text-left">
         <h3 className="text-base font-semibold">{course.courseTitle}</h3>
-        <p className="text-gray-500">GreatStack</p>
+        <p className="text-gray-500">{typeof course.educator === "string" ? "Unknown Educator" : course.educator.name}</p>
         <div className="flex items-center space-x-2">
           <p>{calculateRating(course)}</p>
           <div className="flex">

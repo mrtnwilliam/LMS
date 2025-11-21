@@ -1,18 +1,38 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { dummyStudentEnrolled } from "../../assets/assets";
 import Loading from "../../components/student/Loading";
+import { AppContext } from "../../context/AppContext";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const StudentsEnrolled = () => {
+  const context = useContext(AppContext);
+    if (!context)
+      throw new Error("AppContext must be used within AppContextProvider");
+  
+    const { backendUrl, isEducator, getToken } = context;
 
   const [enrolledStudents, setEnrolledStudents] = useState<typeof dummyStudentEnrolled | null>(null)
 
   const fetchEnrolledStudents = async () => {
-    setEnrolledStudents(dummyStudentEnrolled)
+    try {
+      const token = await getToken();
+      const {data} = await axios.get(backendUrl + '/api/educator/enrolled-students', {headers:{Authorization: `Bearer ${token}`}})
+      if (data.success) {
+        setEnrolledStudents(data.enrolledStudents.reverse())
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
   }
 
   useEffect(() => {
-    fetchEnrolledStudents()
-  },[])
+    if (isEducator) {
+      fetchEnrolledStudents()
+    }
+  },[isEducator])
 
   return enrolledStudents ? (
     <div className="min-h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0">

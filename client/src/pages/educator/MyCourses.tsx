@@ -1,25 +1,39 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../../context/AppContext";
-import type { dummyCourses } from "../../assets/assets";
 import Loading from "../../components/student/Loading";
-type Course = (typeof dummyCourses)[0];
+import type { Course } from "../../types";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const MyCourses = () => {
   const context = useContext(AppContext);
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { currency, allCourses } = context;
+  const { currency, backendUrl, isEducator, getToken } = context;
   const [courses, setCourses] = useState<Course[] | null>(null);
 
   const fetchEducatorCourses = async () => {
-    setCourses(allCourses);
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(backendUrl + "/api/educator/courses", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (data.success) {
+        setCourses(data.courses);
+      }
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
   };
 
   useEffect(() => {
-    fetchEducatorCourses();
+    if (isEducator) {
+      fetchEducatorCourses();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isEducator]);
 
   return courses ? (
     <div className="min-h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0">
@@ -60,8 +74,14 @@ const MyCourses = () => {
                           (course.discount * course.coursePrice) / 100)
                     )}
                   </td>
-                  <td className="px-4 py-3">{course.enrolledStudents.length}</td>
-                  <td className="px-4 py-3">{new Date(course.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    {course.enrolledStudents.length}
+                  </td>
+                  <td className="px-4 py-3">
+                    {course.createdAt
+                      ? new Date(course.createdAt).toLocaleDateString()
+                      : "N/A"}
+                  </td>
                 </tr>
               ))}
             </tbody>

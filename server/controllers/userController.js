@@ -132,7 +132,7 @@ export const getUserCourseProgress = async (req, res) => {
     const progressData = await CourseProgress.findOne({ userId, courseId });
 
     if (!progressData) {
-      res.json({ success: false, message: "Course not found" });
+      return res.json({ success: false, message: "Course not found" });
     }
 
     res.json({ success: true, progressData });
