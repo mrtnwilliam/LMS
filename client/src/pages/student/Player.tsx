@@ -122,6 +122,16 @@ const Player = () => {
     }
   };
 
+  function extractYoutubeId(url: string) {
+    try {
+      const youtubeRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/;
+      const match = url.match(youtubeRegex);
+      return match ? match[1] : "";
+    } catch {
+      return ""; 
+    }
+  }
+
   useEffect(() => {
     getCourseProgress();
   }, []);
@@ -224,7 +234,7 @@ const Player = () => {
           {playerData ? (
             <div>
               <YouTube
-                videoId={playerData?.lectureUrl.split("/").pop()}
+                videoId={extractYoutubeId(playerData?.lectureUrl || "")}
                 iframeClassName="w-full aspect-video"
               />
               <div className="flex justify-between items-center mt-1">
