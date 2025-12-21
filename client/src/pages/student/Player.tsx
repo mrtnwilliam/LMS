@@ -26,7 +26,6 @@ const Player = () => {
     enrolledCourses,
     calculateChapterTime,
     backendUrl,
-    getToken,
     userData,
     fetchUserEnrolledCourses,
   } = context;
@@ -65,11 +64,9 @@ const Player = () => {
 
   const markLectureAsCompleted = async (lectureId: string) => {
     try {
-      const token = await getToken();
       const { data } = await axios.post(
         backendUrl + "/api/user/update-course-progress",
-        { courseId, lectureId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { courseId, lectureId }
       );
 
       if (data.success) {
@@ -85,11 +82,9 @@ const Player = () => {
 
   const getCourseProgress = async () => {
     try {
-      const token = await getToken();
       const { data } = await axios.post(
         backendUrl + "/api/user/get-course-progress",
-        { courseId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { courseId }
       );
 
       if (data.success) {
@@ -105,11 +100,9 @@ const Player = () => {
 
   const handleRate = async (rating: number) => {
     try {
-      const token = await getToken();
       const { data } = await axios.post(
         backendUrl + "/api/user/add-rating",
-        { courseId, rating },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { courseId, rating }
       );
       if (data.success) {
         toast.success(data.message);

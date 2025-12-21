@@ -10,15 +10,12 @@ const MyCourses = () => {
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { currency, backendUrl, isEducator, getToken } = context;
+  const { currency, backendUrl, isEducator } = context;
   const [courses, setCourses] = useState<Course[] | null>(null);
 
   const fetchEducatorCourses = async () => {
     try {
-      const token = await getToken();
-      const { data } = await axios.get(backendUrl + "/api/educator/courses", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(backendUrl + "/api/educator/courses");
 
       if (data.success) {
         setCourses(data.courses);

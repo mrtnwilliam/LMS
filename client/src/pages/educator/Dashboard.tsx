@@ -12,13 +12,12 @@ const Dashboard = () => {
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { currency, backendUrl, isEducator, getToken } = context;
+  const { currency, backendUrl, isEducator } = context;
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
 
   const fetchDashboardData = async () => {
     try {
-      const token = await getToken();
-      const { data } = await axios.get(backendUrl + '/api/educator/dashboard', {headers: {Authorization: `Bearer ${token}`}})
+      const { data } = await axios.get(backendUrl + '/api/educator/dashboard')
 
       if (data.success) {
         setDashboardData(data.dashboardData);

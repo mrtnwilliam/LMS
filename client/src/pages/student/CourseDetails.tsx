@@ -28,8 +28,7 @@ const CourseDetails = () => {
     calculateChapterTime,
     currency,
     backendUrl,
-    userData,
-    getToken
+    userData
   } = context;
 
   const rating =
@@ -57,8 +56,7 @@ const CourseDetails = () => {
       if (isAlreadyEnrolled) {
         return toast.warn('Already Enrolled!')
       }
-      const token = await getToken();
-      const {data} = await axios.post(backendUrl + '/api/user/purchase' , {courseId:courseData?._id}, {headers: {Authorization: `Bearer ${token}`}})
+      const {data} = await axios.post(backendUrl + '/api/user/purchase' , {courseId:courseData?._id})
 
       if (data.success) {
         const {session_url} = data;

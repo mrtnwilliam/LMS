@@ -3,18 +3,13 @@ import "./index.css";
 import { AppContextProvider } from "./context/AppContext.tsx";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router.tsx";
-import { ClerkProvider } from "@clerk/clerk-react";
+import axios from "axios";
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+axios.defaults.withCredentials = true;
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key");
-}
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl='/'>
-    <AppContextProvider>
-      <RouterProvider router={router} />
-    </AppContextProvider>
-  </ClerkProvider>
+  <AppContextProvider>
+    <RouterProvider router={router} />
+  </AppContextProvider>
 );

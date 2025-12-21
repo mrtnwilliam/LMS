@@ -5,7 +5,6 @@ import {
   type ReactNode,
 } from "react";
 import humanizeDuration from "humanize-duration";
-import { useAuth, useUser } from "@clerk/clerk-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import type { AppContextValue, Chapter, Course, UserData } from "../types";
@@ -21,8 +20,8 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
   const currency = import.meta.env.VITE_CURRENCY;
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const {getToken} = useAuth();
-  const {user} = useUser()
+  // const {getToken} = useAuth();
+  // const {user} = useUser()
 
   const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [isEducator, setIsEducator] = useState(false);
@@ -47,22 +46,16 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
 
   // Fetch UserData
   const fetchUserData = async() => {
-
-    if (user?.publicMetadata.role === 'educator') {
-      setIsEducator(true);
-    }
-
     try {
-      const token = await getToken();
-      const {data} = await axios.get(backendUrl + '/api/user/data' , {headers: {Authorization: `Bearer ${token}`}})
+      const {data} = await axios.get(backendUrl + '/api/user/data')
 
       if (data.success) {
         setUserData(data.user)
       } else {
-        toast.error(data.message)
+        // toast.error(data.message) // Don't show error if just not logged in
       }
     } catch (error) {
-      toast.error((error as Error).message)
+     // toast.error((error as Error).message)
     }
   }
 
@@ -107,12 +100,7 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     // Fetch User Enrolled Courses
     const fetchUserEnrolledCourses = async () => {
       try {
-        const token = await getToken();
-        const {data} = await axios.get(`${backendUrl}/api/user/enrolled-courses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const {data} = await axios.get(`${backendUrl}/api/user/enrolled-courses`);
 
         if (data.success) {
           setEnrolledCourses(data.enrolledCourses.reverse());
@@ -126,14 +114,20 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
 
   useEffect(() => {
     fetchAllCourses();
+    fetchUserData();
   }, []);
 
   useEffect(()=>{
-    if (user) {
-      fetchUserData()
-      fetchUserEnrolledCourses()
+    if (userData) {
+      fetchUserEnrolledCourses();
     }
-  },[user])
+    
+    if (userData?.role === 'educator') {
+      setIsEducator(true);
+    } else {
+      setIsEducator(false);
+    }
+  },[userData])
 
   const value: AppContextValue = {
     currency,
@@ -149,8 +143,10 @@ export const AppContextProvider = ({ children }: AppContextProviderProps) => {
     backendUrl,
     userData,
     setUserData,
-    getToken,
-    fetchAllCourses
+    setEnrolledCourses,
+    getToken: async () => "", // Deprecated, keeping for compatibility if needed temporarily
+    fetchAllCourses,
+    fetchUserData,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

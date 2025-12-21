@@ -13,7 +13,7 @@ const MyEnrollments = () => {
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
 
-  const { enrolledCourses, calculateCourseDuration, getToken, backendUrl, calculateNoOfLectures, userData, fetchUserEnrolledCourses } = context;
+  const { enrolledCourses, calculateCourseDuration, backendUrl, calculateNoOfLectures, userData, fetchUserEnrolledCourses } = context;
 
   const navigate = useNavigate();
 
@@ -21,10 +21,9 @@ const MyEnrollments = () => {
 
   const getCourseProgress = async () => {
     try {
-      const token = await getToken();
       const tempProgressArray = await Promise.all(
         enrolledCourses.map(async (course) => {
-          const {data} = await axios.post(`${backendUrl}/api/user/get-course-progress`, {courseId: course._id}, {headers: {Authorization: `Bearer ${token}`}})
+          const {data} = await axios.post(`${backendUrl}/api/user/get-course-progress`, {courseId: course._id})
 
           const totalLectures = calculateNoOfLectures(course);
 

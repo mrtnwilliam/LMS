@@ -10,14 +10,13 @@ const StudentsEnrolled = () => {
     if (!context)
       throw new Error("AppContext must be used within AppContextProvider");
   
-    const { backendUrl, isEducator, getToken } = context;
+    const { backendUrl, isEducator } = context;
 
   const [enrolledStudents, setEnrolledStudents] = useState<typeof dummyStudentEnrolled | null>(null)
 
   const fetchEnrolledStudents = async () => {
     try {
-      const token = await getToken();
-      const {data} = await axios.get(backendUrl + '/api/educator/enrolled-students', {headers:{Authorization: `Bearer ${token}`}})
+      const {data} = await axios.get(backendUrl + '/api/educator/enrolled-students')
       if (data.success) {
         setEnrolledStudents(data.enrolledStudents.reverse())
       } else {

@@ -6,6 +6,8 @@ import { AppContext } from "../../context/AppContext";
 import { toast } from "react-toastify";
 import axios from "axios";
 import type { Chapter } from "../../types";
+import Modal from "../../components/modals/Modal";
+import ModalInput from "../../components/modals/ModalInput";
 
 type ChapterAction = "add" | "remove" | "toggle";
 type LectureAction = "add" | "remove";
@@ -14,8 +16,8 @@ const AddCourse = () => {
   const context = useContext(AppContext);
   if (!context)
     throw new Error("AppContext must be used within AppContextProvider");
-  
-  const { backendUrl, getToken } = context;
+
+  const { backendUrl } = context;
   const quillRef = useRef<Quill | null>(null);
   const editorRef = useRef<HTMLDivElement | null>(null);
 
@@ -89,8 +91,11 @@ const AddCourse = () => {
         if (chapter.chapterId === currentChapterId) {
           const newLecture = {
             ...lectureDetails,
-            lectureOrder: chapter.chapterContent.length > 0 ? chapter.chapterContent.slice(-1)[0].lectureOrder + 1 : 1,
-            lectureId: uniqid()
+            lectureOrder:
+              chapter.chapterContent.length > 0
+                ? chapter.chapterContent.slice(-1)[0].lectureOrder + 1
+                : 1,
+            lectureId: uniqid(),
           };
           chapter.chapterContent.push(newLecture);
         }
@@ -99,22 +104,22 @@ const AddCourse = () => {
     );
     setShowPopup(false);
     setLectureDetails({
-      lectureTitle: '',
+      lectureTitle: "",
       lectureDuration: 0,
-      lectureUrl: '',
+      lectureUrl: "",
       isPreviewFree: false,
-    })
+    });
   };
 
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     try {
       e.preventDefault();
       if (!image) {
-        toast.error('Thumbnail Not Selected');
+        toast.error("Thumbnail Not Selected");
         return;
       }
-;
       const courseData = {
         courseTitle,
         courseDescription: quillRef.current?.root?.innerHTML ?? "",
@@ -123,28 +128,29 @@ const AddCourse = () => {
         courseContent: chapters,
       };
 
-      const formData = new FormData()
-      formData.append('courseData', JSON.stringify(courseData))
-      formData.append('image',image)
-      const token = await getToken()
-      const {data} = await axios.post(backendUrl + '/api/educator/add-course', formData, {headers:{Authorization: `Bearer ${token}`}})
+      const formData = new FormData();
+      formData.append("courseData", JSON.stringify(courseData));
+      formData.append("image", image);
+      const { data } = await axios.post(
+        backendUrl + "/api/educator/add-course",
+        formData
+      );
 
       if (data.success) {
-        toast.success(data.message)
-        setCourseTitle('')
-        setCoursePrice(0)
-        setDiscount(0)
-        setImage(null)
-        setChapters([])
-        quillRef.current!.root.innerHTML = ""
+        toast.success(data.message);
+        setCourseTitle("");
+        setCoursePrice(0);
+        setDiscount(0);
+        setImage(null);
+        setChapters([]);
+        quillRef.current!.root.innerHTML = "";
       } else {
-        toast.error(data.message)
+        toast.error(data.message);
       }
     } catch (error) {
       toast.error((error as Error).message);
     }
-    
-  }
+  };
 
   useEffect(() => {
     if (!quillRef.current && editorRef.current) {
@@ -156,7 +162,10 @@ const AddCourse = () => {
 
   return (
     <div className="h-screen overflow-scroll flex flex-col items-start justify-between md:p-8 md:pb-0">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md w-full text-gray-500">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 max-w-md w-full text-gray-500"
+      >
         <div className="flex flex-col gap-1">
           <p>Course Title</p>
           <input
@@ -260,7 +269,7 @@ const AddCourse = () => {
                       className="flex justify-between items-center mb-2"
                     >
                       <span>
-                        {lectureIndex+1} {lecture.lectureTitle} -{" "}
+                        {lectureIndex + 1} {lecture.lectureTitle} -{" "}
                         {lecture.lectureDuration} mins -{" "}
                         <a
                           href={lecture.lectureUrl}
@@ -302,87 +311,65 @@ const AddCourse = () => {
             + Add Chapter
           </div>
 
-          {showPopup && (
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-800/50">
-              <div className="bg-white text-gray-700 p-4 rounded relative w-full max-w-80">
-                <h2 className="text-lg font-semibold mb-4">Add Lecture</h2>
-                <div className="mb-2">
-                  <p>Lecture Title</p>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full border rounded py-1 px-2"
-                    value={lectureDetails.lectureTitle}
-                    onChange={(e) =>
-                      setLectureDetails({
-                        ...lectureDetails,
-                        lectureTitle: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="mb-2">
-                  <p>Duration (minutes)</p>
-                  <input
-                    type="number"
-                    className="mt-1 block w-full border rounded py-1 px-2"
-                    value={lectureDetails.lectureDuration}
-                    onChange={(e) =>
-                      setLectureDetails({
-                        ...lectureDetails,
-                        lectureDuration: Number(e.target.value),
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="mb-2">
-                  <p>Lecture URL</p>
-                  <input
-                    type="text"
-                    className="mt-1 block w-full border rounded py-1 px-2"
-                    value={lectureDetails.lectureUrl}
-                    onChange={(e) =>
-                      setLectureDetails({
-                        ...lectureDetails,
-                        lectureUrl: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-
-                <div className="flex gap-2 my-4">
-                  <p>Is Preview Free?</p>
-                  <input
-                    type="checkbox"
-                    className="mt-1 scale-125"
-                    checked={lectureDetails.isPreviewFree}
-                    onChange={(e) =>
-                      setLectureDetails({
-                        ...lectureDetails,
-                        isPreviewFree: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  className="w-full bg-blue-400 text-white px-4 py-2 rounded"
-                  onClick={addLecture}
-                >
-                  Add
-                </button>
-
-                <img
-                  onClick={() => setShowPopup(false)}
-                  src={assets.cross_icon}
-                  className="absolute top-4 right-4 w-4 cursor-pointer"
-                  alt=""
-                />
-              </div>
+          <Modal
+            isOpen={showPopup}
+            onClose={() => setShowPopup(false)}
+            title="Add Lecture"
+          >
+            <ModalInput
+              label="Lecture Title"
+              value={lectureDetails.lectureTitle}
+              onChange={(e) =>
+                setLectureDetails({
+                  ...lectureDetails,
+                  lectureTitle: e.target.value,
+                })
+              }
+            />
+            <ModalInput
+              type="number"
+              label="Duration (minutes)"
+              value={lectureDetails.lectureDuration}
+              onChange={(e) =>
+                setLectureDetails({
+                  ...lectureDetails,
+                  lectureDuration: Number(e.target.value),
+                })
+              }
+            />
+            <ModalInput
+              label="Lecture URL"
+              value={lectureDetails.lectureUrl}
+              onChange={(e) =>
+                setLectureDetails({
+                  ...lectureDetails,
+                  lectureUrl: e.target.value,
+                })
+              }
+            />
+            <div className="flex gap-2 my-4">
+              <p>Is Preview Free?</p>
+              <input
+                type="checkbox"
+                className="mt-1 scale-125"
+                checked={lectureDetails.isPreviewFree}
+                onChange={(e) =>
+                  setLectureDetails({
+                    ...lectureDetails,
+                    isPreviewFree: e.target.checked,
+                  })
+                }
+              />
             </div>
-          )}
+
+            <button
+              type="button"
+              className="w-full bg-blue-400 text-white px-4 py-2 rounded"
+              onClick={addLecture}
+            >
+              Add
+            </button>
+          </Modal>
         </div>
         <button
           type="submit"

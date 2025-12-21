@@ -73,6 +73,7 @@ export interface UserData {
   name: string;
   email: string;
   imageUrl: string;
+  role: string;
   enrolledCourses: string[]; // ObjectIds come as strings
   createdAt: string;         // timestamps converted to ISO strings
   updatedAt: string;
@@ -96,8 +97,10 @@ export interface AppContextValue {
   getToken: () => Promise<string | null>;
   userData: UserData | null;
   setUserData: React.Dispatch<React.SetStateAction<UserData | null>>
+  setEnrolledCourses: React.Dispatch<React.SetStateAction<Course[]>>
   fetchUserEnrolledCourses: () => void;
   fetchAllCourses: () => Promise<void>;
+  fetchUserData: () => Promise<void>;
 }
 
 // Dashboard Types
