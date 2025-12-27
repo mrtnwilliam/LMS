@@ -22,18 +22,14 @@ export const stripeWebhooks = async (req, res) => {
     // Verify the event came from Stripe
     event = Stripe.webhooks.constructEvent(req.body, signature, endpointSecret);
   } catch (error) {
-    response.status(400).send(`Webhook Error: ${error.message}`);
+    res.status(400).send(`Webhook Error: ${error.message}`);
   }
 
   // Handle the event
   switch (event.type) {
-    case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object;
-      const paymentIntentId = paymentIntent.id;
-      const session = await stripeInstance.checkout.sessions.list({
-        payment_intent: paymentIntentId
-      })
-      const { purchaseId } = session.data[0].metadata;
+    case 'checkout.session.completed': {
+      const session = event.data.object;
+      const { purchaseId } = session.metadata;
 
       const purchaseData = await Purchase.findById(purchaseId);
       const userData = await User.findById(purchaseData.userId);
