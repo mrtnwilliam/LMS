@@ -78,7 +78,7 @@ export const educatorDashboardData = async (req, res) => {
     // Collect unique enrolled student IDs with their course titles
     const enrolledStudentsData = [];
     for (const course of courses) {
-      const studentIds = course.enrolledStudents.map(String).filter(id => /^[0-9a-fA-F]{24}$/.test(id));
+      const studentIds = course.enrolledStudents.map(id => id.toString().replace(/['"]+/g, '')).filter(id => /^[0-9a-fA-F]{24}$/.test(id));
       const students = await User.find({
         _id: { $in: studentIds }
       }, 'name imageUrl')
