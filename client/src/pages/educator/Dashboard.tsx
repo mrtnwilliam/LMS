@@ -78,7 +78,13 @@ const Dashboard = () => {
                   <tr key={index} className="border-b border-gray-500/20">
                     <td className="px-4 py-3 text-center hidden sm:table-cell">{index + 1}</td>
                     <td className="md:px-4 px-2 py-3 flex items-center space-x-3">
-                      <img src={item.student.imageUrl} alt="Profile" className="w-9 h-9 rounded-full" />
+                      {item.student.imageUrl ? (
+                        <img src={item.student.imageUrl} alt="Profile" className="w-9 h-9 rounded-full" />
+                      ) : (
+                        <div className="w-9 h-9 flex justify-center items-center rounded-full bg-blue-600 text-white">
+                          {item.student.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <span className="truncate">{item.student.name}</span>
                     </td>
                     <td className="px-4 py-3 truncate">{item.courseTitle}</td>
