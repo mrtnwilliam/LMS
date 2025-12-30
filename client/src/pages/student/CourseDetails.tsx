@@ -85,6 +85,16 @@ const CourseDetails = () => {
     setOpenSections((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
+  const extractYoutubeId = (url: string) => {
+    try {
+      const youtubeRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([^&?/]+)/;
+      const match = url.match(youtubeRegex);
+      return match ? match[1] : "";
+    } catch {
+      return "";
+    }
+  };
+
   return courseData ? (
     <>
       <div className="flex md:flex-row flex-col-reverse gap-10 relative items-start justify-between md:px-36 px-8 md:pt-30 pt-20 text-left">
@@ -186,9 +196,7 @@ const CourseDetails = () => {
                                 <p
                                   onClick={() =>
                                     setPlayerData({
-                                      videoId: lecture.lectureUrl
-                                        .split("/")
-                                        .pop() as string,
+                                      videoId: lecture.lectureUrl,
                                     })
                                   }
                                   className="text-blue-500 cursor-pointer"
@@ -228,7 +236,7 @@ const CourseDetails = () => {
         <div className="max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]">
           {playerData ? (
             <YouTube
-              videoId={playerData?.videoId}
+              videoId={extractYoutubeId(playerData.videoId)}
               opts={{ playerVars: { autoplay: 1 } }}
               iframeClassName="w-full aspect-video"
             />
