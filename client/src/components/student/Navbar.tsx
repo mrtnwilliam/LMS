@@ -86,6 +86,7 @@ const Navbar = () => {
   const [form, dispatch] = useReducer(reducer, initialFormState);
 
   const [authModal, setAuthModal] = useState<AuthModalType>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const hasSignupErrors = useMemo(() => {
     return (
@@ -644,12 +645,20 @@ const Navbar = () => {
                 </div>
             </div>
           ) : (
+            <>
+            <button
+              onClick={() =>openModal("signin")}
+              className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-full"
+            >
+              Sign in
+            </button>
              <button
               onClick={() => openModal("signup")}
               className="cursor-pointer bg-blue-600 text-white px-5 py-2 rounded-full"
             >
               Create Account
             </button>
+            </>
           )}
         </div>
         {/* For Phone Screens */}
@@ -666,21 +675,60 @@ const Navbar = () => {
           </div>
           {userData ? (
              <div className="group relative">
-                <button className="flex items-center gap-2 cursor-pointer">
-                    <div className="w-8 h-8 flex justify-center items-center rounded-full bg-black text-white relative group">
+                <button
+                    onClick={() => setIsUserMenuOpen(prev => !prev)}
+                    className="flex items-center gap-2 cursor-pointer"
+                >
+                    <div className="w-8 h-8 flex justify-center items-center rounded-full bg-blue-600 text-white relative">
                         {userData.name[0].toUpperCase()}
                     </div>
                 </button>
-                <div className="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-10">
-                     <div className="bg-white shadow-lg rounded-md overflow-hidden border">
-                        <button onClick={logoutHandler} className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500">Logout</button>
-                     </div>
-                </div>
+                {isUserMenuOpen && (
+                    <div className="absolute right-0 top-full pt-2 w-48 z-10 transition-all duration-200 opacity-100">
+                         <div className="bg-white shadow-lg rounded-md overflow-hidden border">
+                            <button
+                                onClick={() => {
+                                    setIsUserMenuOpen(false);
+                                    logoutHandler();
+                                }}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500"
+                            >
+                                Logout
+                            </button>
+                         </div>
+                    </div>
+                )}
             </div>
           ) : (
-            <button onClick={() => openModal("signup")} className="cursor-pointer">
-              <img src={assets.user_icon} alt="" />
-            </button>
+            <div className="group relative">
+               <button onClick={() => setIsUserMenuOpen(prev => !prev)} className="cursor-pointer">
+                 <img src={assets.user_icon} alt="" />
+               </button>
+               {isUserMenuOpen && (
+                  <div className="absolute right-0 top-full pt-2 w-48 z-10 transition-all duration-200 opacity-100">
+                    <div className="bg-white shadow-lg rounded-md overflow-hidden border">
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openModal("signin");
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                      >
+                        Sign In
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          openModal("signup");
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-100 text-gray-700"
+                      >
+                        Create Account
+                      </button>
+                    </div>
+                  </div>
+                )}
+            </div>
           )}
         </div>
       </div>
