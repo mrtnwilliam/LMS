@@ -1,5 +1,5 @@
 import { assets } from "../../assets/assets";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 function Modal({
   isOpen,
@@ -12,6 +12,17 @@ function Modal({
   title: string;
   children?: ReactNode;
 }) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
